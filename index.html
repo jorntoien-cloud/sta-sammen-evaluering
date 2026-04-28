@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stå sammen – Evalueringsanalyse</title>
+<style>
+  :root {
+    --green-dark: #1a5c3a;
+    --green-mid: #2d8653;
+    --green-light: #4caf50;
+    --green-pale: #e8f5e9;
+    --green-ultra: #f1faf3;
+    --orange: #e65100;
+    --orange-pale: #fff3e0;
+    --red: #c62828;
+    --grey: #6b7280;
+    --grey-light: #f3f4f6;
+    --border: #d1d5db;
+    --white: #ffffff;
+    --shadow: 0 2px 8px rgba(0,0,0,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--grey-light); color: #1a1a1a; min-height: 100vh; }
+
+  /* ---- LOGIN ---- */
+  #loginPage {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-mid) 100%);
+  }
+  .login-card {
+    background: var(--white); border-radius: 16px; padding: 48px 40px;
+    width: 100%; max-width: 440px; box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  }
+  .login-card h1 { color: var(--green-dark); font-size: 1.6rem; margin-bottom: 6px; }
+  .login-card p { color: var(--grey); margin-bottom: 28px; font-size: 0.95rem; }
+  .form-group { margin-bottom: 18px; }
+  .form-group label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9rem; color: var(--green-dark); }
+  .form-group input {
+    width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+    border-radius: 8px; font-size: 0.95rem; transition: border-color .2s;
+  }
+  .form-group input:focus { outline: none; border-color: var(--green-light); }
+  .btn-primary {
+    width: 100%; padding: 12px; background: var(--green-dark); color: white;
+    border: none; border-radius: 8px; font-size: 1rem; font-weight: 600;
+    cursor: pointer; transition: background .2s;
+  }
+  .btn-primary:hover { background: var(--green-mid); }
+  .btn-primary:disabled { background: #9ca3af; cursor: not-allowed; }
+
+  /* ---- MAIN APP ---- */
+  #mainApp { display: none; min-height: 100vh; }
+  .app-header {
+    background: var(--green-dark); color: white; padding: 14px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow);
+  }
+  .app-header h1 { font-size: 1.25rem; letter-spacing: .3px; }
+  .app-header small { color: rgba(255,255,255,.7); font-size: .8rem; }
+  .logout-btn {
+    background: rgba(255,255,255,.15); color: white; border: 1px solid rgba(255,255,255,.3);
+    padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: .85rem; transition: background .2s;
+  }
+  .logout-btn:hover { background: rgba(255,255,255,.25); }
+
+  .app-body { padding: 28px 32px; max-width: 1100px; margin: 0 auto; }
+
+  /* ---- STEPS ---- */
+  .step { background: var(--white); border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: var(--shadow); }
+  .step-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .step-num {
+    width: 32px; height: 32px; border-radius: 50%; background: var(--green-dark);
+    color: white; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .step-header h2 { font-size: 1.1rem; color: var(--green-dark); }
+
+  /* ---- FILTER SECTION ---- */
+  .filter-grid { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 20px; }
+  .filter-box { border: 1.5px solid var(--border); border-radius: 10px; padding: 14px; }
+  .filter-box h3 { font-size: .9rem; color: var(--green-dark); font-weight: 700; margin-bottom: 10px; }
+  .filter-items { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; }
+  .filter-item { display: flex; align-items: center; gap: 8px; font-size: .88rem; cursor: pointer; }
+  .filter-item input[type=checkbox] { accent-color: var(--green-mid); width: 15px; height: 15px; cursor: pointer; }
+  .select-all-btn {
+    font-size: .78rem; color: var(--green-mid); background: none; border: none;
+    cursor: pointer; padding: 0; text-decoration: underline; margin-bottom: 8px;
+  }
+  .select-all-btn:hover { color: var(--green-dark); }
+
+  /* ---- BUTTONS ---- */
+  .btn-action {
+    padding: 10px 22px; background: var(--green-mid); color: white;
+    border: none; border-radius: 8px; font-size: .95rem; font-weight: 600;
+    cursor: pointer; transition: background .2s; display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn-action:hover { background: var(--green-dark); }
+  .btn-action:disabled { background: #9ca3af; cursor: not-allowed; }
+  .btn-fetch { margin-top: 16px; }
+
+  /* ---- PROGRESS ---- */
+  .progress-bar-wrap { background: var(--grey-light); border-radius: 8px; height: 10px; margin: 12px 0; overflow: hidden; }
+  .progress-bar { height: 100%; background: var(--green-light); border-radius: 8px; transition: width .3s; width: 0; }
+  .progress-text { font-size: .85rem; color: var(--grey); }
+
+  /* ---- TABS ---- */
+  .tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
+  .tab-btn {
+    padding: 10px 24px; background: none; border: none; cursor: pointer;
+    font-size: .95rem; color: var(--grey); border-bottom: 3px solid transparent;
+    margin-bottom: -2px; font-weight: 600; transition: all .2s;
+  }
+  .tab-btn.active { color: var(--green-dark); border-bottom-color: var(--green-dark); }
+  .tab-btn:hover:not(.active) { color: var(--green-dark); background: var(--green-ultra); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ---- RAW DATA ---- */
+  .board-card { border: 1.5px solid var(--border); border-radius: 10px; margin-bottom: 12px; overflow: hidden; }
+  .board-card-header {
+    background: var(--green-pale); padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between; cursor: pointer;
+  }
+  .board-card-header:hover { background: #d4edda; }
+  .board-card-title { font-weight: 700; color: var(--green-dark); font-size: .95rem; }
+  .board-card-meta { font-size: .8rem; color: var(--grey); margin-top: 2px; }
+  .board-card-toggle { color: var(--green-mid); font-size: 1.1rem; font-weight: 700; }
+  .board-card-body { padding: 14px 16px; display: none; }
+  .board-card-body.open { display: block; }
+  .sticky-section { margin-bottom: 12px; }
+  .sticky-section h4 { font-size: .85rem; font-weight: 700; margin-bottom: 8px; }
+  .sticky-section h4.plus { color: var(--green-mid); }
+  .sticky-section h4.delta { color: var(--orange); }
+  .tags-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag {
+    padding: 4px 10px; border-radius: 20px; font-size: .8rem;
+    max-width: 300px; word-break: break-word;
+  }
+  .tag.plus { background: var(--green-pale); color: var(--green-dark); border: 1px solid #a5d6a7; }
+  .tag.delta { background: var(--orange-pale); color: var(--orange); border: 1px solid #ffcc80; }
+  .empty-note { font-size: .82rem; color: var(--grey); font-style: italic; }
+
+  /* ---- ANALYSIS ---- */
+  .analysis-content { line-height: 1.75; }
+  .analysis-content h3 { color: var(--green-dark); font-size: 1.05rem; margin: 18px 0 8px; }
+  .analysis-content p { margin-bottom: 10px; font-size: .94rem; }
+  .analysis-content ul, .analysis-content ol { margin: 8px 0 10px 22px; }
+  .analysis-content li { margin-bottom: 5px; font-size: .94rem; }
+  .analysis-placeholder { color: var(--grey); font-style: italic; text-align: center; padding: 40px; }
+
+  /* ---- EXPORT ---- */
+  .export-table-wrap { overflow-x: auto; margin-bottom: 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+  th { background: var(--green-dark); color: white; padding: 10px 12px; text-align: left; }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  tr:nth-child(even) td { background: var(--green-ultra); }
+  .badge-plus { display: inline-block; padding: 2px 8px; border-radius: 12px; background: var(--green-pale); color: var(--green-dark); font-size: .78rem; font-weight: 600; }
+  .badge-delta { display: inline-block; padding: 2px 8px; border-radius: 12px; background: var(--orange-pale); color: var(--orange); font-size: .78rem; font-weight: 600; }
+
+  /* ---- ERROR ---- */
+  .error-msg { background: #fde8e8; border: 1px solid #f5b7b7; color: var(--red); padding: 10px 14px; border-radius: 8px; font-size: .88rem; margin-top: 10px; }
+  .info-msg { background: var(--green-pale); border: 1px solid #a5d6a7; color: var(--green-dark); padding: 10px 14px; border-radius: 8px; font-size: .88rem; margin-top: 10px; }
+
+  /* ---- LOADING ---- */
+  .spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2.5px solid rgba(255,255,255,.4); border-top-color: white;
+    border-radius: 50%; animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.35); z-index: 200;
+    align-items: center; justify-content: center; flex-direction: column; gap: 16px;
+  }
+  .loading-overlay.show { display: flex; }
+  .loading-box { background: white; padding: 28px 36px; border-radius: 14px; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,.2); }
+  .loading-box p { margin-top: 12px; color: var(--green-dark); font-weight: 600; }
+  .loading-box small { color: var(--grey); font-size: .82rem; }
+  .big-spinner {
+    width: 44px; height: 44px; border: 4px solid var(--green-pale);
+    border-top-color: var(--green-mid); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto;
+  }
+
+  /* ---- SUMMARY BAR ---- */
+  .summary-bar {
+    display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px;
+  }
+  .summary-chip {
+    background: var(--white); border: 1.5px solid var(--border); border-radius: 10px;
+    padding: 10px 18px; text-align: center; min-width: 110px;
+  }
+  .summary-chip .num { font-size: 1.5rem; font-weight: 700; color: var(--green-dark); }
+  .summary-chip .lbl { font-size: .75rem; color: var(--grey); margin-top: 2px; }
+
+  /* ---- REGIONAL COMPARISON ---- */
+  .region-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; margin-bottom: 20px; }
+  .region-card { border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .region-card-header { background: var(--green-dark); color: white; padding: 12px 16px; }
+  .region-card-header h3 { font-size: .95rem; margin-bottom: 2px; }
+  .region-card-header .region-stats { font-size: .78rem; opacity: .8; }
+  .region-card-body { padding: 12px 14px; }
+  .region-section-title { font-size: .8rem; font-weight: 700; margin: 8px 0 5px; }
+  .region-section-title.plus  { color: var(--green-mid); }
+  .region-section-title.delta { color: var(--orange); }
+  .region-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+  .region-tag { font-size: .74rem; padding: 3px 8px; border-radius: 12px; }
+  .region-tag.plus  { background: var(--green-pale);  color: var(--green-dark); border: 1px solid #a5d6a7; }
+  .region-tag.delta { background: var(--orange-pale); color: var(--orange);     border: 1px solid #ffcc80; }
+
+  .region-compare-table { width: 100%; border-collapse: collapse; font-size: .85rem; margin-bottom: 20px; }
+  .region-compare-table th { background: var(--green-dark); color: white; padding: 9px 12px; text-align: left; }
+  .region-compare-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  .region-compare-table tr:nth-child(even) td { background: var(--green-ultra); }
+  .pct-bar-wrap { background: #e5e7eb; border-radius: 4px; height: 6px; width: 80px; display: inline-block; vertical-align: middle; margin-left: 6px; }
+  .pct-bar { height: 100%; border-radius: 4px; background: var(--green-light); }
+
+  /* ---- STATS ---- */
+  .stats-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .stat-card { background: var(--white); border: 1.5px solid var(--border); border-radius: 10px; padding: 16px 14px; text-align: center; }
+  .stat-card.stat-warn { border-color: #e74c3c; background: #fff5f5; }
+  .stat-card.stat-ok  { border-color: var(--green-light); background: #f0faf3; }
+  .stat-num { font-size: 2rem; font-weight: 800; color: var(--green-dark); line-height: 1; }
+  .stat-card.stat-warn .stat-num { color: #e74c3c; }
+  .stat-card.stat-ok  .stat-num { color: #27ae60; }
+  .stat-lbl { font-size: .75rem; color: var(--grey); margin-top: 5px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+  .stats-side-tables { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 24px; }
+  .stats-side-tables > div { flex: 1; min-width: 260px; }
+
+  /* ---- ANALYSIS MODES ---- */
+  .analysis-modes { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .mode-btn { padding: 7px 16px; border: 1.5px solid var(--green-mid); border-radius: 20px; background: white;
+    color: var(--green-mid); font-size: .85rem; font-weight: 600; cursor: pointer; transition: all .2s; }
+  .mode-btn:hover { background: var(--green-pale); }
+  .mode-btn.active { background: var(--green-mid); color: white; }
+
+  @media (max-width: 768px) {
+    .app-body { padding: 14px 10px; }
+    .filter-grid { grid-template-columns: 1fr; }
+    .app-header { padding: 12px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginPage">
+  <div class="login-card">
+    <h1>Stå sammen</h1>
+    <p>Evalueringsanalyse for Consto – logg inn med dine API-nøkler</p>
+    <div class="form-group">
+      <label>Miro Access Token</label>
+      <input type="password" id="miroToken" placeholder="Lim inn Miro-token her..." autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label>Anthropic API-nøkkel</label>
+      <input type="password" id="anthropicKey" placeholder="sk-ant-..." autocomplete="off">
+    </div>
+    <div id="loginError" class="error-msg" style="display:none;margin-bottom:14px;"></div>
+    <button class="btn-primary" id="loginBtn" onclick="doLogin()">Start applikasjonen</button>
+    <p id="configStatus" style="margin-top:16px;font-size:0.8rem;text-align:center;min-height:1.2em;"></p>
+  </div>
+</div>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-box">
+    <div class="big-spinner"></div>
+    <p id="loadingText">Laster...</p>
+    <small id="loadingSubtext"></small>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp">
+  <div class="app-header">
+    <div>
+      <h1>Stå sammen – Evalueringsanalyse</h1>
+      <small>Consto | Henter data fra Miro</small>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">Logg ut</button>
+  </div>
+
+  <div class="app-body">
+
+    <!-- STEP 1: Hent boards -->
+    <div class="step" id="step1">
+      <div class="step-header">
+        <div class="step-num">1</div>
+        <h2>Hent boards fra Miro</h2>
+      </div>
+      <p style="font-size:.9rem;color:var(--grey);margin-bottom:14px;">
+        Henter alle Miro-boards som inneholder "Stå sammen" i navnet.
+      </p>
+      <button class="btn-action" id="fetchBoardsBtn" onclick="fetchBoards()">
+        Hent boards
+      </button>
+      <div id="boardsResult"></div>
+    </div>
+
+    <!-- STEP 2: Filtrer -->
+    <div class="step" id="step2" style="display:none;">
+      <div class="step-header">
+        <div class="step-num">2</div>
+        <h2>Velg boards for analyse</h2>
+      </div>
+      <div class="filter-grid">
+        <div class="filter-box">
+          <h3>Region</h3>
+          <button class="select-all-btn" onclick="selectAll('regionFilter', true)">Velg alle</button> /
+          <button class="select-all-btn" onclick="selectAll('regionFilter', false)">Ingen</button>
+          <div class="filter-items" id="regionFilter"></div>
+        </div>
+        <div class="filter-box">
+          <h3>Nivå</h3>
+          <button class="select-all-btn" onclick="selectAll('nivalFilter', true)">Velg alle</button> /
+          <button class="select-all-btn" onclick="selectAll('nivalFilter', false)">Ingen</button>
+          <div class="filter-items" id="nivalFilter"></div>
+        </div>
+        <div class="filter-box">
+          <h3>Enkelt-boards</h3>
+          <button class="select-all-btn" onclick="selectAll('boardFilter', true)">Velg alle</button> /
+          <button class="select-all-btn" onclick="selectAll('boardFilter', false)">Ingen</button>
+          <div class="filter-items" id="boardFilter"></div>
+        </div>
+      </div>
+      <button class="btn-action btn-fetch" id="fetchEvalBtn" onclick="fetchEvaluations()">
+        Hent evalueringer fra valgte boards
+      </button>
+      <div id="step2Error"></div>
+    </div>
+
+    <!-- STEP 3+: Resultater -->
+    <div class="step" id="step345" style="display:none;">
+      <div class="step-header">
+        <div class="step-num">3</div>
+        <h2>Evalueringer og analyse</h2>
+      </div>
+
+      <!-- Progress -->
+      <div id="progressSection" style="display:none;">
+        <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+        <div class="progress-text" id="progressText">Forbereder...</div>
+      </div>
+
+      <!-- Summary -->
+      <div class="summary-bar" id="summaryBar" style="display:none;">
+        <div class="summary-chip"><div class="num" id="sumBoards">0</div><div class="lbl">Boards</div></div>
+        <div class="summary-chip"><div class="num" id="sumPlus">0</div><div class="lbl">Pluss-lapper</div></div>
+        <div class="summary-chip"><div class="num" id="sumDelta">0</div><div class="lbl">Enda bedre-lapper</div></div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs" id="resultTabs" style="display:none;">
+        <button class="tab-btn active" onclick="showTab('stats')">Statistikk</button>
+        <button class="tab-btn" onclick="showTab('rawData')">Rådata</button>
+        <button class="tab-btn" onclick="showTab('regions')">Regioner</button>
+        <button class="tab-btn" onclick="showTab('niva')">Nivå</button>
+        <button class="tab-btn" onclick="showTab('analysis')">Analyse (AI)</button>
+        <button class="tab-btn" onclick="showTab('export')">Eksport</button>
+      </div>
+
+      <!-- STATISTICS -->
+      <div class="tab-content active" id="tab-stats">
+        <div class="stats-cards" id="statsCards"></div>
+        <div style="overflow-x:auto;" id="statsTable"></div>
+        <div class="stats-side-tables">
+          <div id="statsRegionTable"></div>
+          <div id="statsNivaTable"></div>
+        </div>
+      </div>
+
+      <!-- RAW DATA -->
+      <div class="tab-content" id="tab-rawData">
+        <div id="rawDataContent"></div>
+      </div>
+
+      <!-- REGIONAL COMPARISON -->
+      <div class="tab-content" id="tab-regions">
+        <div id="regionSummaryTable" style="margin-bottom:20px;overflow-x:auto;"></div>
+        <div id="regionGrid"></div>
+      </div>
+
+      <!-- NIVÅ COMPARISON -->
+      <div class="tab-content" id="tab-niva">
+        <div id="nivaSummaryTable" style="margin-bottom:20px;overflow-x:auto;"></div>
+        <div id="nivaGrid"></div>
+      </div>
+
+      <!-- ANALYSIS -->
+      <div class="tab-content" id="tab-analysis">
+        <div style="font-size:.8rem;color:var(--grey);margin-bottom:6px;font-weight:600;">FOR LEDELSESMØTET</div>
+        <div class="analysis-modes" id="analysisModes" style="margin-bottom:10px;">
+          <button class="mode-btn active" id="modeStd"       onclick="setAnalysisMode('standard')">Oppsummering</button>
+          <button class="mode-btn"        id="modeLeder"     onclick="setAnalysisMode('leder')">Lederrapport</button>
+          <button class="mode-btn"        id="modeVidere"    onclick="setAnalysisMode('videre')">Videre arbeid</button>
+        </div>
+        <div style="font-size:.8rem;color:var(--grey);margin-bottom:6px;font-weight:600;">DYBDEANALYSER</div>
+        <div class="analysis-modes" style="margin-bottom:4px;">
+          <button class="mode-btn"        id="modeDyp"       onclick="setAnalysisMode('dyp')">Dyp temaanalyse</button>
+          <button class="mode-btn"        id="modeSamling"   onclick="setAnalysisMode('samling')">Per samling</button>
+          <button class="mode-btn"        id="modeRegion"    onclick="setAnalysisMode('regional')">Regional sammenligning</button>
+          <button class="mode-btn"        id="modeNiva"      onclick="setAnalysisMode('niva')">Nivå-sammenligning</button>
+        </div>
+        <div id="analysisContent">
+          <p class="analysis-placeholder">Velg en analysetype over for å starte.</p>
+        </div>
+      </div>
+
+      <!-- EXPORT -->
+      <div class="tab-content" id="tab-export">
+        <button class="btn-action" onclick="downloadCSV()" style="margin-bottom:14px;">
+          Last ned CSV
+        </button>
+        <div class="export-table-wrap">
+          <table id="exportTable">
+            <thead><tr><th>Board</th><th>Region</th><th>Nivå</th><th>Gruppe</th><th>Type</th><th>Tekst</th></tr></thead>
+            <tbody id="exportBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ===================== STATE =====================
+let APP = {
+  miroToken: '',
+  anthropicKey: '',
+  boards: [],
+  selectedBoards: [],
+  evaluations: {},
+};
+
+// ===================== LOGIN =====================
+function doLogin() {
+  const tok = document.getElementById('miroToken').value.trim();
+  const key = document.getElementById('anthropicKey').value.trim();
+  const err = document.getElementById('loginError');
+  if (!tok || !key) {
+    err.textContent = 'Fyll inn begge feltene.';
+    err.style.display = 'block';
+    return;
+  }
+  APP.miroToken = tok;
+  APP.anthropicKey = key;
+  err.style.display = 'none';
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+}
+
+function doLogout() {
+  APP = { miroToken: '', anthropicKey: '', boards: [], selectedBoards: [], evaluations: {} };
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('mainApp').style.display = 'none';
+  document.getElementById('miroToken').value = '';
+  document.getElementById('anthropicKey').value = '';
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('step345').style.display = 'none';
+  document.getElementById('boardsResult').innerHTML = '';
+}
+
+// ===================== MIRO API HELPER =====================
+async function miroGet(url) {
+  const res = await fetch(url, {
+    headers: { 'Authorization': 'Bearer ' + APP.miroToken, 'Accept': 'application/json' }
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error('Miro API-feil ' + res.status + ': ' + (body.message || res.statusText));
+  }
+  return res.json();
+}
+
+async function miroPaginatedGet(baseUrl) {
+  let items = [];
+  let url = baseUrl;
+  let hasMore = true;
+  while (hasMore) {
+    const data = await miroGet(url);
+    if (data.data) items = items.concat(data.data);
+    if (data.cursor) {
+      const sep = url.includes('?') ? '&' : '?';
+      url = baseUrl + sep + 'cursor=' + encodeURIComponent(data.cursor);
+      // Avoid infinite loop if API misbehaves
+      if (data.data && data.data.length === 0) hasMore = false;
+    } else {
+      hasMore = false;
+    }
+  }
+  return items;
+}
+
+// ===================== STEP 1: FETCH BOARDS =====================
+function parseBoardName(name) {
+  // Handles patterns like:
+  //   "Stå sammen gruppe Nord Nivå 2-3"
+  //   "Stå sammen gruppe Midt-Norge Nivå 1"
+  //   "Stå sammen Nivå 3-2"
+  let region = null, niva = null, gruppe = null;
+
+  // 1. Extract Nivå + gruppe: "Nivå N-G" or "Nivå N – G"
+  let m = name.match(/[Nn]iv[åa]\s*(\d+)\s*[-–]\s*(\d+)/);
+  if (m) { niva = m[1]; gruppe = m[2]; }
+
+  // 2. Extract just Nivå number if no group
+  if (!niva) {
+    let m2 = name.match(/[Nn]iv[åa]\s*(\d+)/);
+    if (m2) niva = m2[1];
+  }
+
+  // 3. Extract region: text between "gruppe" and "Nivå" — lazy any-char (fixes [^N] bug)
+  let rMatch = name.match(/[Gg]ruppe\s+(.+?)\s+[Nn]iv[åa]/);
+  if (rMatch) region = rMatch[1].trim();
+
+  // 4. Fallback: text after "gruppe" stripping trailing Nivå-fragment
+  if (!region) {
+    let r2 = name.match(/[Gg]ruppe\s+(.+)/);
+    if (r2) region = r2[1].replace(/\s*[Nn]iv[åa].*$/, '').trim() || null;
+  }
+
+  return {
+    region: region || 'Ukjent',
+    niva: niva || 'Ukjent',
+    gruppe: gruppe || '–'
+  };
+}
+
+async function fetchBoards() {
+  const btn = document.getElementById('fetchBoardsBtn');
+  const result = document.getElementById('boardsResult');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Henter...';
+  result.innerHTML = '';
+
+  try {
+    let boards = [];
+    // Miro boards endpoint supports offset-based pagination
+    let offset = 0;
+    const limit = 50;
+    let hasMore = true;
+
+    while (hasMore) {
+      const data = await miroGet(`https://api.miro.com/v2/boards?limit=${limit}&offset=${offset}`);
+      const page = data.data || [];
+      boards = boards.concat(page);
+      // Stop when we got fewer than limit (last page) or cursor-style signal
+      if (page.length < limit) {
+        hasMore = false;
+      } else if (data.cursor) {
+        // Some API versions return cursor instead of offset
+        offset = null;
+        hasMore = false; // will switch to cursor below
+      } else {
+        offset += limit;
+      }
+    }
+
+    // Also try cursor-based if the first call returned a cursor
+    // (handled above by miroPaginatedGet for items; boards uses offset)
+
+    // Filter: name contains "Stå sammen" (case-insensitive)
+    const filtered = boards.filter(b => b.name && b.name.toLowerCase().includes('stå sammen'));
+
+    if (filtered.length === 0) {
+      result.innerHTML = '<div class="error-msg">Ingen boards med "Stå sammen" i navnet ble funnet. Sjekk at token er korrekt og har tilgang.</div>';
+      btn.disabled = false;
+      btn.textContent = 'Hent boards';
+      return;
+    }
+
+    APP.boards = filtered.map(b => {
+      const parsed = parseBoardName(b.name);
+      const viewLink = b.viewLink || `https://miro.com/app/board/${b.id}/`;
+      return { id: b.id, name: b.name, viewLink, ...parsed };
+    });
+
+    result.innerHTML = `<div class="info-msg">Fant ${APP.boards.length} boards med "Stå sammen" i navnet.</div>`;
+    buildFilters();
+    document.getElementById('step2').style.display = 'block';
+
+  } catch (e) {
+    result.innerHTML = `<div class="error-msg">Feil: ${escHtml(e.message)}</div>`;
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Hent boards på nytt';
+}
+
+// ===================== STEP 2: FILTERS =====================
+function buildFilters() {
+  const regions = [...new Set(APP.boards.map(b => b.region))].sort();
+  const nivaer = [...new Set(APP.boards.map(b => b.niva))].sort();
+
+  const regionDiv = document.getElementById('regionFilter');
+  regionDiv.innerHTML = regions.map(r =>
+    `<label class="filter-item"><input type="checkbox" class="rf" value="${escHtml(r)}" checked onchange="updateBoardFilter()"> ${escHtml(r)}</label>`
+  ).join('');
+
+  const nivalDiv = document.getElementById('nivalFilter');
+  nivalDiv.innerHTML = nivaer.map(n =>
+    `<label class="filter-item"><input type="checkbox" class="nf" value="${escHtml(n)}" checked onchange="updateBoardFilter()"> Nivå ${escHtml(n)}</label>`
+  ).join('');
+
+  updateBoardFilter();
+}
+
+function updateBoardFilter() {
+  const selRegions = [...document.querySelectorAll('.rf:checked')].map(e => e.value);
+  const selNivaer = [...document.querySelectorAll('.nf:checked')].map(e => e.value);
+
+  const filtered = APP.boards.filter(b =>
+    selRegions.includes(b.region) && selNivaer.includes(b.niva)
+  );
+
+  const boardDiv = document.getElementById('boardFilter');
+  boardDiv.innerHTML = filtered.length === 0
+    ? '<span class="empty-note">Ingen boards matcher filtrene.</span>'
+    : filtered.map(b =>
+        `<label class="filter-item"><input type="checkbox" class="bf" value="${escHtml(b.id)}" checked> ${escHtml(b.name)}</label>`
+      ).join('');
+}
+
+function selectAll(containerId, val) {
+  // containerId is the div id
+  let cls = containerId === 'regionFilter' ? '.rf' :
+            containerId === 'nivalFilter' ? '.nf' : '.bf';
+  document.querySelectorAll('#' + containerId + ' input').forEach(cb => { cb.checked = val; });
+  if (containerId !== 'boardFilter') updateBoardFilter();
+}
+
+function getSelectedBoards() {
+  const ids = [...document.querySelectorAll('.bf:checked')].map(e => e.value);
+  return APP.boards.filter(b => ids.includes(b.id));
+}
+
+// ===================== STEP 3: FETCH EVALUATIONS =====================
+// Color classification helpers
+function isYellow(hex) {
+  if (!hex) return false;
+  const h = hex.toLowerCase().replace('#','');
+  // yellow family: high R+G, low B
+  try {
+    const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+    return r > 180 && g > 180 && b < 100;
+  } catch { return false; }
+}
+
+function isRed(hex) {
+  if (!hex) return false;
+  const h = hex.toLowerCase().replace('#','');
+  try {
+    const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+    return r > 160 && g < 80 && b < 80;
+  } catch { return false; }
+}
+
+function classifySticky(sticky, evaluationItems) {
+  const rawColor = (sticky.style && sticky.style.fillColor) ? sticky.style.fillColor.toLowerCase() : '';
+
+  // Named colours (Miro API sometimes returns names instead of hex)
+  const yellowNames = ['yellow', 'light_yellow', 'light yellow', 'cyan', 'light_cyan'];
+  const redNames   = ['red', 'light_red', 'light red', 'pink', 'light_pink', 'orange', 'light_orange'];
+  if (yellowNames.includes(rawColor)) return 'plus';
+  if (redNames.includes(rawColor))   return 'delta';
+
+  // Hex colour analysis
+  if (rawColor.startsWith('#')) {
+    if (isYellow(rawColor)) return 'plus';
+    if (isRed(rawColor))    return 'delta';
+  }
+
+  // Fallback: x-position relative to median of evaluation stickies
+  if (evaluationItems && evaluationItems.length > 0) {
+    const xs = evaluationItems.filter(i => i.position).map(i => i.position.x).sort((a,b) => a-b);
+    const midX = xs[Math.floor(xs.length / 2)];
+    if (sticky.position) {
+      return sticky.position.x < midX ? 'plus' : 'delta';
+    }
+  }
+
+  return 'plus';
+}
+
+function setProgress(current, total, text) {
+  const pct = total > 0 ? Math.round((current / total) * 100) : 0;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = text || `${current} / ${total}`;
+}
+
+async function fetchEvaluations() {
+  const selected = getSelectedBoards();
+  if (selected.length === 0) {
+    document.getElementById('step2Error').innerHTML = '<div class="error-msg" style="margin-top:10px;">Velg minst ett board.</div>';
+    return;
+  }
+  document.getElementById('step2Error').innerHTML = '';
+
+  APP.selectedBoards = selected;
+  APP.evaluations = {};
+
+  const step345 = document.getElementById('step345');
+  step345.style.display = 'block';
+  document.getElementById('progressSection').style.display = 'block';
+  document.getElementById('summaryBar').style.display = 'none';
+  document.getElementById('resultTabs').style.display = 'none';
+  document.getElementById('rawDataContent').innerHTML = '';
+  document.getElementById('exportBody').innerHTML = '';
+  document.getElementById('analysisContent').innerHTML = '<p class="analysis-placeholder">Venter på rådata...</p>';
+
+  step345.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const btn = document.getElementById('fetchEvalBtn');
+  btn.disabled = true;
+
+  let total = selected.length;
+  let done = 0;
+
+  for (const board of selected) {
+    setProgress(done, total, `Henter: ${board.name} (${done+1}/${total})`);
+    try {
+      // Fetch all frames and all stickies in parallel
+      const [frames, stickies] = await Promise.all([
+        miroPaginatedGet(`https://api.miro.com/v2/boards/${board.id}/items?type=frame&limit=50`),
+        miroPaginatedGet(`https://api.miro.com/v2/boards/${board.id}/items?type=sticky_note&limit=50`)
+      ]);
+
+      // ── Evalueringslogikk ────────────────────────────────────────────────────
+      // Finn ramme med "evaluering" i tittelen.
+      // Grønne lapper inni → Pluss. light_pink-lapper inni → Enda bedre.
+
+      const titleOf = f => ((f.data && f.data.title) || '').toLowerCase().trim();
+
+      const evalFrames = frames.filter(f => titleOf(f).includes('evaluering'));
+
+      // Er sticky-senter innenfor rammen?
+      // Prøver top-left-opprinnelse først (Miro v2 standard for frames),
+      // deretter senter-opprinnelse som fallback.
+      function stickyInFrame(s, f) {
+        if (!s.position || !f.position || !f.geometry) return false;
+        const sx = s.position.x, sy = s.position.y;
+        const fx = f.position.x, fy = f.position.y;
+        const fw = f.geometry.width || 0, fh = f.geometry.height || 0;
+        return (sx >= fx && sx <= fx + fw && sy >= fy && sy <= fy + fh) ||
+               (sx >= fx - fw/2 && sx <= fx + fw/2 && sy >= fy - fh/2 && sy <= fy + fh/2);
+      }
+
+      // Fargeklassifisering: green → pluss, light_pink → delta
+      function colorType(s) {
+        const c = ((s.style && s.style.fillColor) || '').toLowerCase().trim();
+        if (c === 'green')      return 'plus';
+        if (c === 'light_pink') return 'delta';
+        // Hex-fallback
+        if (c.startsWith('#') && c.length >= 7) {
+          try {
+            const r = parseInt(c.slice(1,3),16), g = parseInt(c.slice(3,5),16), b = parseInt(c.slice(5,7),16);
+            if (g > r + 30 && g > b + 30 && g > 100) return 'plus';
+            if (r > 200 && g > 150 && b > 150 && r > g && r > b) return 'delta'; // pink
+          } catch(_) {}
+        }
+        return null;
+      }
+
+      const plus = [], delta = [];
+      let warningMsg = null;
+      let method = '';
+
+      if (evalFrames.length === 0) {
+        warningMsg = 'Ingen ramme med "evaluering" i tittelen funnet. Legg til en slik ramme i Miro-boardet.';
+      } else {
+        const evalFrameIds = new Set(evalFrames.map(f => String(f.id)));
+
+        // Avgjør om en sticky er inni evalueringsrammen:
+        // A) parent.id matcher ramme-ID  (brukt når lapper er eksplisitt lagt i rammen)
+        // B) romlig sjekk som fallback   (brukt når parent ikke er satt i API-svaret)
+        function inEvalFrame(s) {
+          if (s.parent && evalFrameIds.has(String(s.parent.id))) return true;
+          return evalFrames.some(f => stickyInFrame(s, f));
+        }
+
+        const matched = stickies.filter(inEvalFrame);
+
+        for (const s of matched) {
+          const text = (s.data && s.data.content) ? stripHtml(s.data.content).trim() : '';
+          if (!text) continue;
+          const ct = colorType(s);
+          if (ct === 'plus')  plus.push(text);
+          if (ct === 'delta') delta.push(text);
+        }
+
+        const byParent  = matched.filter(s => s.parent && evalFrameIds.has(String(s.parent.id))).length;
+        const bySpatial = matched.length - byParent;
+        method = `"evaluering"-ramme (${evalFrames.length} stk) · ${byParent} via parent-ID, ${bySpatial} via posisjon · grønn=Pluss · light_pink=Enda bedre`;
+
+        if (plus.length === 0 && delta.length === 0) {
+          if (matched.length > 0) {
+            warningMsg = `Fant ${matched.length} lapper i evalueringsrammen, men ingen er grønne (Pluss) eller light_pink (Enda bedre). ` +
+                         `Sjekk lappenes farge i Miro.`;
+          } else {
+            warningMsg = `Evalueringsramme funnet, men ingen lapper er koblet til den. ` +
+                         `Prøv å dra lappene inn i rammen i Miro (ikke bare plassere dem oppå).`;
+          }
+        }
+      }
+
+      APP.evaluations[board.id] = {
+        boardName: board.name, region: board.region, niva: board.niva, gruppe: board.gruppe,
+        viewLink: board.viewLink, plus, delta, warning: warningMsg || null, method
+      };
+
+    } catch (e) {
+      APP.evaluations[board.id] = {
+        boardName: board.name, region: board.region, niva: board.niva, gruppe: board.gruppe,
+        viewLink: board.viewLink, plus: [], delta: [], error: e.message
+      };
+    }
+    done++;
+  }
+
+  setProgress(total, total, 'Ferdig med å hente evalueringer!');
+
+  renderRawData();
+  renderRegions();
+  renderNiva();
+  renderStats();
+  renderExportTable();
+  updateSummary();
+
+  document.getElementById('summaryBar').style.display = 'flex';
+  document.getElementById('resultTabs').style.display = 'flex';
+  document.getElementById('progressSection').style.display = 'none';
+
+  document.getElementById('analysisContent').innerHTML = '<p class="analysis-placeholder">Velg en analysetype over for å starte.</p>';
+  showTab('stats');
+  btn.disabled = false;
+}
+
+// ===================== RENDER RAW DATA =====================
+function renderRawData() {
+  const container = document.getElementById('rawDataContent');
+  const entries = Object.values(APP.evaluations);
+  if (entries.length === 0) { container.innerHTML = '<p class="empty-note">Ingen data.</p>'; return; }
+
+  container.innerHTML = entries.map((ev, i) => {
+    const plusTags = ev.plus.map(t => `<span class="tag plus">${escHtml(t)}</span>`).join('');
+    const deltaTags = ev.delta.map(t => `<span class="tag delta">${escHtml(t)}</span>`).join('');
+    const errMsg  = ev.error   ? `<div class="error-msg">Feil: ${escHtml(ev.error)}</div>` : '';
+    const warnMsg = ev.warning ? `<div class="error-msg" style="background:#fff8e1;border-color:#ffe082;color:#6d4c00;">⚠ ${escHtml(ev.warning)}</div>` : '';
+    return `
+      <div class="board-card">
+        <div class="board-card-header" onclick="toggleCard(${i})">
+          <div>
+            <div class="board-card-title">${escHtml(ev.boardName)}</div>
+            <div class="board-card-meta">Region: ${escHtml(ev.region)} | Nivå: ${escHtml(ev.niva)} | Gruppe: ${escHtml(ev.gruppe)} | ${ev.plus.length} pluss, ${ev.delta.length} enda bedre${ev.method ? ' | <em>'+escHtml(ev.method)+'</em>' : ''}</div>
+          </div>
+          <div class="board-card-toggle" id="toggle-${i}">▼</div>
+        </div>
+        <div class="board-card-body" id="body-${i}">
+          ${errMsg}${warnMsg}
+          <div class="sticky-section">
+            <h4 class="plus">Pluss (${ev.plus.length})</h4>
+            <div class="tags-wrap">${plusTags || '<span class="empty-note">Ingen pluss-lapper funnet.</span>'}</div>
+          </div>
+          <div class="sticky-section">
+            <h4 class="delta">Enda bedre hvis... (${ev.delta.length})</h4>
+            <div class="tags-wrap">${deltaTags || '<span class="empty-note">Ingen delta-lapper funnet.</span>'}</div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleCard(i) {
+  const body = document.getElementById('body-' + i);
+  const tog = document.getElementById('toggle-' + i);
+  if (body.classList.contains('open')) {
+    body.classList.remove('open');
+    tog.textContent = '▼';
+  } else {
+    body.classList.add('open');
+    tog.textContent = '▲';
+  }
+}
+
+// ===================== SUMMARY =====================
+function updateSummary() {
+  const entries = Object.values(APP.evaluations);
+  const totalPlus = entries.reduce((a,b) => a + b.plus.length, 0);
+  const totalDelta = entries.reduce((a,b) => a + b.delta.length, 0);
+  document.getElementById('sumBoards').textContent = entries.length;
+  document.getElementById('sumPlus').textContent = totalPlus;
+  document.getElementById('sumDelta').textContent = totalDelta;
+}
+
+// ===================== EXPORT TABLE =====================
+function renderExportTable() {
+  const tbody = document.getElementById('exportBody');
+  const rows = [];
+  for (const ev of Object.values(APP.evaluations)) {
+    for (const t of ev.plus) rows.push({ ...ev, type: 'Pluss', text: t });
+    for (const t of ev.delta) rows.push({ ...ev, type: 'Enda bedre hvis', text: t });
+  }
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>${escHtml(r.boardName)}</td>
+      <td>${escHtml(r.region)}</td>
+      <td>${escHtml(r.niva)}</td>
+      <td>${escHtml(r.gruppe)}</td>
+      <td>${r.type === 'Pluss' ? '<span class="badge-plus">Pluss</span>' : '<span class="badge-delta">Enda bedre hvis</span>'}</td>
+      <td>${escHtml(r.text)}</td>
+    </tr>`).join('');
+}
+
+function downloadCSV() {
+  const entries = Object.values(APP.evaluations);
+  const rows = [['Board', 'Region', 'Nivå', 'Gruppe', 'Type', 'Tekst']];
+  for (const ev of entries) {
+    for (const t of ev.plus) rows.push([ev.boardName, ev.region, ev.niva, ev.gruppe, 'Pluss', t]);
+    for (const t of ev.delta) rows.push([ev.boardName, ev.region, ev.niva, ev.gruppe, 'Enda bedre hvis', t]);
+  }
+  const csv = rows.map(r => r.map(cell => '"' + String(cell).replace(/"/g, '""') + '"').join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'sta-sammen-evalueringer.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ===================== REGIONAL RENDERING =====================
+function renderRegions() {
+  const entries = Object.values(APP.evaluations);
+  const byRegion = {};
+  for (const ev of entries) {
+    const r = ev.region || 'Ukjent';
+    if (!byRegion[r]) byRegion[r] = { region: r, boards: [], plus: [], delta: [] };
+    byRegion[r].boards.push(ev.boardName);
+    byRegion[r].plus  = byRegion[r].plus.concat(ev.plus);
+    byRegion[r].delta = byRegion[r].delta.concat(ev.delta);
+  }
+  const regions = Object.values(byRegion).sort((a,b) => a.region.localeCompare(b.region, 'no'));
+  const totalPlus  = regions.reduce((s,r) => s + r.plus.length,  0);
+  const totalDelta = regions.reduce((s,r) => s + r.delta.length, 0);
+
+  // Summary table
+  const tableRows = regions.map(r => {
+    const pPct = totalPlus  ? Math.round(r.plus.length  / totalPlus  * 100) : 0;
+    const dPct = totalDelta ? Math.round(r.delta.length / totalDelta * 100) : 0;
+    return `<tr>
+      <td><strong>${escHtml(r.region)}</strong></td>
+      <td style="text-align:center">${r.boards.length}</td>
+      <td>${r.plus.length} <span class="pct-bar-wrap"><span class="pct-bar" style="width:${pPct}%"></span></span></td>
+      <td>${r.delta.length} <span class="pct-bar-wrap"><span class="pct-bar" style="background:var(--orange);width:${dPct}%"></span></span></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('regionSummaryTable').innerHTML = `
+    <table class="region-compare-table">
+      <thead><tr><th>Region</th><th>Boards</th><th>Pluss-lapper</th><th>Enda bedre-lapper</th></tr></thead>
+      <tbody>${tableRows}</tbody>
+    </table>`;
+
+  // Region cards
+  document.getElementById('regionGrid').innerHTML = `<div class="region-grid">${
+    regions.map(r => {
+      const plusTags  = r.plus.slice(0,12).map(t => `<span class="region-tag plus">${escHtml(t)}</span>`).join('');
+      const deltaTags = r.delta.slice(0,12).map(t => `<span class="region-tag delta">${escHtml(t)}</span>`).join('');
+      const moreP = r.plus.length  > 12 ? `<span style="font-size:.74rem;color:var(--grey)">+${r.plus.length-12} til...</span>` : '';
+      const moreD = r.delta.length > 12 ? `<span style="font-size:.74rem;color:var(--grey)">+${r.delta.length-12} til...</span>` : '';
+      return `<div class="region-card">
+        <div class="region-card-header">
+          <h3>${escHtml(r.region)}</h3>
+          <div class="region-stats">${r.boards.length} board(s) · ${r.plus.length} pluss · ${r.delta.length} enda bedre</div>
+        </div>
+        <div class="region-card-body">
+          <div class="region-section-title plus">Pluss</div>
+          <div class="region-tags">${plusTags || '<span style="font-size:.78rem;color:var(--grey);font-style:italic">Ingen</span>'}${moreP}</div>
+          <div class="region-section-title delta">Enda bedre hvis</div>
+          <div class="region-tags">${deltaTags || '<span style="font-size:.78rem;color:var(--grey);font-style:italic">Ingen</span>'}${moreD}</div>
+        </div>
+      </div>`;
+    }).join('')
+  }</div>`;
+}
+
+// ===================== NIVÅ RENDERING =====================
+function renderNiva() {
+  const entries = Object.values(APP.evaluations);
+  const byNiva = {};
+  for (const ev of entries) {
+    const n = ev.niva || 'Ukjent';
+    if (!byNiva[n]) byNiva[n] = { niva: n, boards: [], plus: [], delta: [] };
+    byNiva[n].boards.push(ev.boardName);
+    byNiva[n].plus  = byNiva[n].plus.concat(ev.plus);
+    byNiva[n].delta = byNiva[n].delta.concat(ev.delta);
+  }
+  const nivåer = Object.values(byNiva).sort((a,b) => String(a.niva).localeCompare(String(b.niva), 'no', {numeric:true}));
+  const totalPlus  = nivåer.reduce((s,r) => s + r.plus.length,  0);
+  const totalDelta = nivåer.reduce((s,r) => s + r.delta.length, 0);
+
+  const tableRows = nivåer.map(r => {
+    const pPct = totalPlus  ? Math.round(r.plus.length  / totalPlus  * 100) : 0;
+    const dPct = totalDelta ? Math.round(r.delta.length / totalDelta * 100) : 0;
+    return `<tr>
+      <td><strong>Nivå ${escHtml(r.niva)}</strong></td>
+      <td style="text-align:center">${r.boards.length}</td>
+      <td>${r.plus.length} <span class="pct-bar-wrap"><span class="pct-bar" style="width:${pPct}%"></span></span></td>
+      <td>${r.delta.length} <span class="pct-bar-wrap"><span class="pct-bar" style="background:var(--orange);width:${dPct}%"></span></span></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('nivaSummaryTable').innerHTML = `
+    <table class="region-compare-table">
+      <thead><tr><th>Nivå</th><th>Boards</th><th>Pluss-lapper</th><th>Enda bedre-lapper</th></tr></thead>
+      <tbody>${tableRows}</tbody>
+    </table>`;
+
+  document.getElementById('nivaGrid').innerHTML = `<div class="region-grid">${
+    nivåer.map(r => {
+      const plusTags  = r.plus.slice(0,12).map(t => `<span class="region-tag plus">${escHtml(t)}</span>`).join('');
+      const deltaTags = r.delta.slice(0,12).map(t => `<span class="region-tag delta">${escHtml(t)}</span>`).join('');
+      const moreP = r.plus.length  > 12 ? `<span style="font-size:.74rem;color:var(--grey)">+${r.plus.length-12} til...</span>` : '';
+      const moreD = r.delta.length > 12 ? `<span style="font-size:.74rem;color:var(--grey)">+${r.delta.length-12} til...</span>` : '';
+      return `<div class="region-card">
+        <div class="region-card-header">
+          <h3>Nivå ${escHtml(r.niva)}</h3>
+          <div class="region-stats">${r.boards.length} board(s) · ${r.plus.length} pluss · ${r.delta.length} enda bedre</div>
+        </div>
+        <div class="region-card-body">
+          <div class="region-section-title plus">Pluss</div>
+          <div class="region-tags">${plusTags || '<span style="font-size:.78rem;color:var(--grey);font-style:italic">Ingen</span>'}${moreP}</div>
+          <div class="region-section-title delta">Enda bedre hvis</div>
+          <div class="region-tags">${deltaTags || '<span style="font-size:.78rem;color:var(--grey);font-style:italic">Ingen</span>'}${moreD}</div>
+        </div>
+      </div>`;
+    }).join('')
+  }</div>`;
+}
+
+// ===================== STATISTICS RENDERING =====================
+function renderStats() {
+  const entries = Object.values(APP.evaluations);
+  const total      = entries.length;
+  const withData   = entries.filter(e => (e.plus.length + e.delta.length) > 0).length;
+  const noData     = total - withData;
+  const totalPlus  = entries.reduce((s,e) => s + e.plus.length,  0);
+  const totalDelta = entries.reduce((s,e) => s + e.delta.length, 0);
+  const totalAll   = totalPlus + totalDelta;
+  const avgAll     = total > 0 ? (totalAll / total).toFixed(1) : '–';
+
+  // ---- Sammendragskort ----
+  document.getElementById('statsCards').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">Grupper totalt</div></div>
+    <div class="stat-card stat-ok"><div class="stat-num">${withData}</div><div class="stat-lbl">Har evalueringslapper</div></div>
+    <div class="stat-card ${noData > 0 ? 'stat-warn' : 'stat-ok'}"><div class="stat-num">${noData}</div><div class="stat-lbl">Ingen evalueringslapper</div></div>
+    <div class="stat-card"><div class="stat-num">${totalAll}</div><div class="stat-lbl">Lapper totalt</div></div>
+    <div class="stat-card"><div class="stat-num">${totalPlus}</div><div class="stat-lbl">Pluss-lapper</div></div>
+    <div class="stat-card"><div class="stat-num">${totalDelta}</div><div class="stat-lbl">Enda bedre-lapper</div></div>
+    <div class="stat-card"><div class="stat-num">${avgAll}</div><div class="stat-lbl">Snitt lapper/gruppe</div></div>
+  `;
+
+  // ---- Alle grupper (tabell) ----
+  const sorted = [...entries].sort((a,b) => {
+    const r = String(a.region).localeCompare(String(b.region), 'no');
+    if (r !== 0) return r;
+    const n = String(a.niva).localeCompare(String(b.niva), 'no', {numeric:true});
+    if (n !== 0) return n;
+    return String(a.gruppe).localeCompare(String(b.gruppe), 'no', {numeric:true});
+  });
+
+  const bodyRows = sorted.map((e, i) => {
+    const tot = e.plus.length + e.delta.length;
+    const status = tot === 0 ? '🔴 Ingen lapper'
+                 : tot < 4  ? '🟡 Få lapper'
+                 :             '🟢 OK';
+    const rowBg = tot === 0 ? 'style="background:#fff0f0"' : '';
+    const miroLink = e.viewLink
+      ? `<a href="${escHtml(e.viewLink)}" target="_blank" title="Åpne i Miro" style="text-decoration:none;font-size:1.1rem;">🔗</a>`
+      : '';
+    return `<tr ${rowBg}>
+      <td style="text-align:center;color:#bbb;font-size:.78rem;">${i+1}</td>
+      <td>${escHtml(e.region)}</td>
+      <td style="text-align:center;">Nivå ${escHtml(e.niva)}</td>
+      <td style="text-align:center;">${escHtml(e.gruppe)}</td>
+      <td style="text-align:center;color:var(--green-mid);font-weight:700;">${e.plus.length}</td>
+      <td style="text-align:center;color:#e67e22;font-weight:700;">${e.delta.length}</td>
+      <td style="text-align:center;font-weight:800;">${tot}</td>
+      <td>${status}</td>
+      <td style="text-align:center;">${miroLink}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('statsTable').innerHTML = `
+    <h3 style="margin:0 0 10px;">Alle grupper</h3>
+    <table class="region-compare-table">
+      <thead><tr>
+        <th>#</th><th>Region</th><th>Nivå</th><th>Gruppe</th>
+        <th>Pluss</th><th>Enda bedre</th><th>Totalt</th><th>Status</th><th>Miro</th>
+      </tr></thead>
+      <tbody>${bodyRows}</tbody>
+    </table>`;
+
+  // ---- Per region ----
+  const byRegion = {};
+  for (const e of entries) {
+    const r = e.region || 'Ukjent';
+    if (!byRegion[r]) byRegion[r] = {boards:0, plus:0, delta:0, empty:0};
+    byRegion[r].boards++;
+    byRegion[r].plus  += e.plus.length;
+    byRegion[r].delta += e.delta.length;
+    if (e.plus.length + e.delta.length === 0) byRegion[r].empty++;
+  }
+  const rRows = Object.entries(byRegion)
+    .sort(([a],[b]) => a.localeCompare(b,'no'))
+    .map(([r,d]) => {
+      const tot = d.plus + d.delta;
+      const emptyCell = d.empty > 0
+        ? `<span style="color:#e74c3c;font-weight:700;">${d.empty}</span>`
+        : '<span style="color:#27ae60;">–</span>';
+      return `<tr>
+        <td>${escHtml(r)}</td>
+        <td style="text-align:center;">${d.boards}</td>
+        <td style="text-align:center;">${tot}</td>
+        <td style="text-align:center;">${emptyCell}</td>
+        <td style="text-align:center;">${d.boards > 0 ? (tot/d.boards).toFixed(1) : '–'}</td>
+      </tr>`;
+    }).join('');
+
+  document.getElementById('statsRegionTable').innerHTML = `
+    <h3 style="margin:0 0 10px;">Per region</h3>
+    <table class="region-compare-table">
+      <thead><tr><th>Region</th><th>Grupper</th><th>Lapper</th><th>Tomme</th><th>Snitt</th></tr></thead>
+      <tbody>${rRows}</tbody>
+    </table>`;
+
+  // ---- Per nivå ----
+  const byNiva = {};
+  for (const e of entries) {
+    const n = e.niva || 'Ukjent';
+    if (!byNiva[n]) byNiva[n] = {boards:0, plus:0, delta:0, empty:0};
+    byNiva[n].boards++;
+    byNiva[n].plus  += e.plus.length;
+    byNiva[n].delta += e.delta.length;
+    if (e.plus.length + e.delta.length === 0) byNiva[n].empty++;
+  }
+  const nRows = Object.entries(byNiva)
+    .sort(([a],[b]) => String(a).localeCompare(String(b),'no',{numeric:true}))
+    .map(([n,d]) => {
+      const tot = d.plus + d.delta;
+      const emptyCell = d.empty > 0
+        ? `<span style="color:#e74c3c;font-weight:700;">${d.empty}</span>`
+        : '<span style="color:#27ae60;">–</span>';
+      return `<tr>
+        <td>Nivå ${escHtml(n)}</td>
+        <td style="text-align:center;">${d.boards}</td>
+        <td style="text-align:center;">${tot}</td>
+        <td style="text-align:center;">${emptyCell}</td>
+        <td style="text-align:center;">${d.boards > 0 ? (tot/d.boards).toFixed(1) : '–'}</td>
+      </tr>`;
+    }).join('');
+
+  document.getElementById('statsNivaTable').innerHTML = `
+    <h3 style="margin:0 0 10px;">Per nivå</h3>
+    <table class="region-compare-table">
+      <thead><tr><th>Nivå</th><th>Grupper</th><th>Lapper</th><th>Tomme</th><th>Snitt</th></tr></thead>
+      <tbody>${nRows}</tbody>
+    </table>`;
+}
+
+// ===================== ANALYSIS MODE =====================
+let APP_ANALYSIS_MODE = 'standard';
+
+function setAnalysisMode(mode) {
+  APP_ANALYSIS_MODE = mode;
+  ['standard','leder','videre','dyp','samling','regional','niva'].forEach(m => {
+    const id = 'mode' + m.charAt(0).toUpperCase() + m.slice(1);
+    document.getElementById(id)?.classList.toggle('active', m === mode);
+  });
+  runAnalysis();
+}
+
+function buildAnalysisPrompt(entries) {
+  const boardNames = entries.map(e => e.boardName).join(', ');
+  const allPlus  = entries.flatMap(e => e.plus);
+  const allDelta = entries.flatMap(e => e.delta);
+  const plusList  = allPlus.map( (t,i) => `${i+1}. ${t}`).join('\n');
+  const deltaList = allDelta.map((t,i) => `${i+1}. ${t}`).join('\n');
+
+  // Group by region for regional prompt
+  const byRegion = {};
+  for (const ev of entries) {
+    const r = ev.region || 'Ukjent';
+    if (!byRegion[r]) byRegion[r] = { plus: [], delta: [] };
+    byRegion[r].plus  = byRegion[r].plus.concat(ev.plus);
+    byRegion[r].delta = byRegion[r].delta.concat(ev.delta);
+  }
+  const regionBlocks = Object.entries(byRegion).map(([reg, data]) =>
+    `### Region: ${reg}\nPLUSS:\n${data.plus.map((t,i)=>`${i+1}. ${t}`).join('\n') || '(ingen)'}\n\nENDA BEDRE:\n${data.delta.map((t,i)=>`${i+1}. ${t}`).join('\n') || '(ingen)'}`
+  ).join('\n\n');
+
+  if (APP_ANALYSIS_MODE === 'standard') {
+    return `Her er evalueringene fra ${entries.length} Miro-boards (${boardNames}):\n\n` +
+      `PLUSS (hva var bra):\n${plusList || '(ingen)'}\n\n` +
+      `ENDA BEDRE HVIS (forbedringsforslag):\n${deltaList || '(ingen)'}\n\n` +
+      `Gi meg:\n` +
+      `1) Topp 5 positive funn med forklaring og eksempler fra dataene\n` +
+      `2) De 3 områdene som ville ha gjort programmet bedre, med forklaring og eksempler fra dataene\n` +
+      `3) Gjennomgående mønstre og temaer på tvers av boards\n` +
+      `4) Anbefalinger dersom dere skulle kjørt flere runder av dette programmet\n` +
+      `5) Key takeaways for hele programmet – hva bør Consto ta med seg dersom de skulle kjøre et nytt landsdekkende program`;
+  }
+
+  if (APP_ANALYSIS_MODE === 'dyp') {
+    return `Her er ${allPlus.length} pluss-evalueringer og ${allDelta.length} enda bedre-evalueringer fra ${entries.length} Miro-boards i programmet "Stå sammen" (${boardNames}).\n\n` +
+      `PLUSS:\n${plusList || '(ingen)'}\n\n` +
+      `ENDA BEDRE HVIS:\n${deltaList || '(ingen)'}\n\n` +
+      `Gjennomfør en DYP temaanalyse:\n\n` +
+      `1) PLUSS – Identifiser og gruppper alle positive tilbakemeldinger i temaer. For hvert tema: gi temaets navn, frekvens (ca. antall), og 2-3 konkrete sitater som eksempler.\n\n` +
+      `2) ENDA BEDRE – Identifiser og grupper alle forbedringsforslag i temaer. For hvert tema: gi temaets navn, frekvens (ca. antall), og 2-3 konkrete sitater som eksempler.\n\n` +
+      `3) KRYSSTEMAER – Hvilke temaer går igjen på tvers av både pluss og enda bedre? Hva forteller dette om programmet?\n\n` +
+      `4) STYRKER OG SÅRBARHETER – Hva er programmets klare styrker? Hva er de viktigste sårbarhetene?\n\n` +
+      `5) PRIORITERTE ANBEFALINGER – Ranger de 5 viktigste tiltakene for neste programrunde, med begrunnelse.`;
+  }
+
+  if (APP_ANALYSIS_MODE === 'regional') {
+    return `Her er evalueringene fra programmet "Stå sammen" fordelt på regioner (${entries.length} boards totalt):\n\n` +
+      `${regionBlocks}\n\n` +
+      `Gjennomfør en REGIONAL SAMMENLIGNING:\n\n` +
+      `1) LIKHETER PÅ TVERS AV REGIONER – Hvilke positive erfaringer og forbedringsønsker er felles for de fleste regioner?\n\n` +
+      `2) REGIONALE FORSKJELLER – Hva skiller regionene fra hverandre? Hvilke regioner skiller seg ut positivt eller negativt, og hvorfor?\n\n` +
+      `3) REGIONSSPESIFIKKE FUNN – Er det noen regioner med unike behov eller tilbakemeldinger som krever særskilt oppmerksomhet?\n\n` +
+      `4) MØNSTRE PÅ TVERS – Hvilke temaer dominerer uavhengig av region?\n\n` +
+      `5) ANBEFALINGER – Gi både generelle anbefalinger for hele programmet og regionsspesifikke anbefalinger der det er relevant.`;
+  }
+
+  if (APP_ANALYSIS_MODE === 'leder') {
+    // Group by niva for score table
+    const byNivaL = {};
+    for (const ev of entries) {
+      const n = ev.niva || 'Ukjent';
+      if (!byNivaL[n]) byNivaL[n] = { plus: 0, delta: 0 };
+      byNivaL[n].plus  += ev.plus.length;
+      byNivaL[n].delta += ev.delta.length;
+    }
+    const nivaTable = Object.entries(byNivaL)
+      .sort(([a],[b]) => String(a).localeCompare(String(b), 'no', {numeric:true}))
+      .map(([n, d]) => `- Nivå ${n}: ${d.plus} pluss, ${d.delta} enda bedre`)
+      .join('\n');
+
+    return `Du er rådgiver som forbereder en lederrapport for toppledelsen i Consto-konsernet.\n\n` +
+      `PROGRAMMET "Stå sammen":\n` +
+      `Consto har kjørt fire samlinger for ledere og mellomledere på tvers av virksomheten. Temaene for samlingene var:\n` +
+      `- Samling 1: Virksomhetens kultur\n` +
+      `- Samling 2: Flyt\n` +
+      `- Samling 3: Visualisering\n` +
+      `- Samling 4: Forbedring\n\n` +
+      `Evalueringene er hentet fra ${entries.length} grupper (Miro-boards) på tvers av ${Object.keys(byNivaL).length} nivåer:\n${nivaTable}\n\n` +
+      `PLUSS (hva deltakerne fremhevet som bra):\n${plusList || '(ingen)'}\n\n` +
+      `ENDA BEDRE HVIS (hva deltakerne ønsker forbedret):\n${deltaList || '(ingen)'}\n\n` +
+      `Skriv en LEDERRAPPORT strukturert slik:\n\n` +
+      `## Sammendrag\nEtt avsnitt (maks 5 setninger) som oppsummerer programmets viktigste funn for en toppleder.\n\n` +
+      `## Programscore\nGi en helhetsvurdering av programmet på en skala 1–10 med en kort begrunnelse basert på forholdet mellom positive tilbakemeldinger og forbedringsønsker, og bredden i temaene.\n\n` +
+      `## Topp 3 suksesser\nDe tre tydeligste tingene programmet lyktes med – med belegg fra evalueringene.\n\n` +
+      `## Topp 3 forbedringsområder\nDe tre viktigste områdene å adressere fremover – med belegg fra evalueringene.\n\n` +
+      `## Risiko og oppmerksomhetspunkter\nEr det noe i evalueringene som bør følges opp raskt av ledelsen?\n\n` +
+      `## Konklusjon\nEn setning om programmets overordnede verdi og anbefalt neste steg.`;
+  }
+
+  if (APP_ANALYSIS_MODE === 'videre') {
+    return `Du er organisasjonsutvikler som hjelper Consto med å planlegge det videre arbeidet etter programmet "Stå sammen".\n\n` +
+      `BAKGRUNN:\n` +
+      `"Stå sammen" er et lederutviklingsprogram for Consto med fire samlinger:\n` +
+      `- Samling 1: Virksomhetens kultur\n` +
+      `- Samling 2: Flyt\n` +
+      `- Samling 3: Visualisering\n` +
+      `- Samling 4: Forbedring\n\n` +
+      `Målet er at ledere og mellomledere på tvers av virksomheten skal omsette innsikt fra samlingene til konkret praksis i sine enheter.\n\n` +
+      `EVALUERINGSDATA FRA ${entries.length} GRUPPER:\n` +
+      `PLUSS (hva fungerte):\n${plusList || '(ingen)'}\n\n` +
+      `ENDA BEDRE HVIS (hva kan forbedres):\n${deltaList || '(ingen)'}\n\n` +
+      `Lag en HANDLINGSPLAN FOR VIDERE ARBEID strukturert slik:\n\n` +
+      `## Hva tar vi med oss videre\nBasert på evalueringene: hvilke elementer fra programmet bør forankres og videreføres i virksomheten?\n\n` +
+      `## Strategiske anbefalinger (3–5 tiltak)\nKonkrete, prioriterte tiltak Consto bør iverksette basert på evalueringene. For hvert tiltak: hva, hvorfor, og hvem bør eie det.\n\n` +
+      `## Kultur og atferd\nHva forteller evalueringene om kulturell modenhet? Hva bør Consto jobbe spesifikt med for å styrke kulturen videre?\n\n` +
+      `## Operasjonelle forbedringer\nHva i gjennomføringen av programmet bør justeres dersom det kjøres igjen?\n\n` +
+      `## Forslag til neste programrunde\nBased på mangler og ønsker i evalueringene: hvilke temaer og formater bør prioriteres i en eventuell neste runde?`;
+  }
+
+  if (APP_ANALYSIS_MODE === 'samling') {
+    // Attempt to map feedback to sessions by keyword analysis
+    return `Du er ekspert på lederutvikling og programevaluering. Analyser evalueringene fra programmet "Stå sammen" og forsøk å knytte dem til de fire samlingenes temaer.\n\n` +
+      `PROGRAMOVERSIKT – "Stå sammen" fire samlinger:\n` +
+      `- Samling 1 – KULTUR: Virksomhetens kultur, verdier, atferd, tillit, fellesskap\n` +
+      `- Samling 2 – FLYT: Arbeidsflyt, prosesser, effektivitet, hindringer, samsvar mellom kapasitet og belastning\n` +
+      `- Samling 3 – VISUALISERING: Visuell styring, tavlemøter, synliggjøring av arbeid og status\n` +
+      `- Samling 4 – FORBEDRING: Kontinuerlig forbedring, problemløsing, A3, tiltak\n\n` +
+      `EVALUERINGSDATA FRA ${entries.length} GRUPPER:\n` +
+      `PLUSS:\n${plusList || '(ingen)'}\n\n` +
+      `ENDA BEDRE HVIS:\n${deltaList || '(ingen)'}\n\n` +
+      `Gjennomfør en ANALYSE PER SAMLING:\n\n` +
+      `For hver av de fire samlingene (Kultur, Flyt, Visualisering, Forbedring):\n` +
+      `- Hvilke tilbakemeldinger (pluss og enda bedre) ser ut til å handle om dette temaet?\n` +
+      `- Hva lyktes best innen dette temaet?\n` +
+      `- Hva bør forbedres?\n` +
+      `- Gi en kort vurdering av i hvilken grad deltakerne tok til seg temaet.\n\n` +
+      `Avslutt med:\n` +
+      `## Tverrsnitt\nHvilke tilbakemeldinger handler om programmet generelt (ikke et spesifikt tema) – f.eks. logistikk, fasilitering, gruppesammensetning, tid?\n\n` +
+      `## Samlet vurdering\nHvilket tema skapte mest engasjement? Hvilke temaer trenger mer forankring?`;
+  }
+
+  if (APP_ANALYSIS_MODE === 'niva') {
+    // Group by niva
+    const byNivaM = {};
+    for (const ev of entries) {
+      const n = ev.niva || 'Ukjent';
+      if (!byNivaM[n]) byNivaM[n] = { plus: [], delta: [] };
+      byNivaM[n].plus  = byNivaM[n].plus.concat(ev.plus);
+      byNivaM[n].delta = byNivaM[n].delta.concat(ev.delta);
+    }
+    const nivaBlocks = Object.entries(byNivaM)
+      .sort(([a],[b]) => String(a).localeCompare(String(b), 'no', {numeric:true}))
+      .map(([n, d]) =>
+        `### Nivå ${n}\nPLUSS:\n${d.plus.map((t,i)=>`${i+1}. ${t}`).join('\n') || '(ingen)'}\n\nENDA BEDRE:\n${d.delta.map((t,i)=>`${i+1}. ${t}`).join('\n') || '(ingen)'}`
+      ).join('\n\n');
+
+    return `Her er evalueringene fra programmet "Stå sammen" gruppert etter ledernivå (${entries.length} grupper totalt):\n\n` +
+      `${nivaBlocks}\n\n` +
+      `Gjennomfør en NIVÅ-SAMMENLIGNING:\n\n` +
+      `## Likheter på tvers av nivåer\nHvilke erfaringer og ønsker deles av ledere på alle nivåer?\n\n` +
+      `## Nivåforskjeller\nHva skiller de ulike ledernivåene fra hverandre? Har toppledere (Nivå 1) andre erfaringer enn mellomledere (Nivå 2–3) og førstelinjeledere (Nivå 4)?\n\n` +
+      `## Nivåspesifikke funn\nEr det noen nivåer med særskilte behov, utfordringer eller ønsker som krever tilpasset oppfølging?\n\n` +
+      `## Progresjon og modenhet\nHar ulike nivåer ulik modenhet eller ulikt utgangspunkt for å ta i bruk programmets innhold?\n\n` +
+      `## Anbefalinger\nGi anbefalinger for hele programmet og eventuelle nivåspesifikke tilpasninger for en neste runde.`;
+  }
+
+  return '';
+}
+
+// ===================== STEP 4: ANALYSIS =====================
+async function runAnalysis() {
+  const el = document.getElementById('analysisContent');
+  try {
+    const entries = Object.values(APP.evaluations || {});
+    const totalPlus  = entries.reduce((a,b) => a + (b.plus  ? b.plus.length  : 0), 0);
+    const totalDelta = entries.reduce((a,b) => a + (b.delta ? b.delta.length : 0), 0);
+
+    if (entries.length === 0) {
+      el.innerHTML = '<p class="analysis-placeholder">Hent evalueringer først (steg 2).</p>';
+      return;
+    }
+    if (totalPlus + totalDelta === 0) {
+      el.innerHTML = '<p class="analysis-placeholder">Ingen evalueringstekster funnet å analysere.</p>';
+      return;
+    }
+
+    const userMsg = buildAnalysisPrompt(entries);
+    if (!userMsg) {
+      el.innerHTML = '<p class="analysis-placeholder">Ingen analysetype valgt.</p>';
+      return;
+    }
+
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY_MS = 12000;
+
+    const payload = JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4000,
+      system: "Du er ekspert på organisasjonsutvikling og lederutviklingsprogrammer. Analyser evalueringer fra programmet 'Stå sammen' og svar alltid på norsk.",
+      messages: [{ role: 'user', content: userMsg }]
+    });
+
+    let res, attempt = 0;
+    while (true) {
+      attempt++;
+      el.innerHTML = `
+        <div style="text-align:center;padding:40px;">
+          <div class="big-spinner" style="margin:0 auto 16px;"></div>
+          <p style="color:var(--green-dark);font-weight:600;">Sender til Claude for analyse${attempt > 1 ? ` (forsøk ${attempt}/${MAX_RETRIES})` : ''}...</p>
+          <small style="color:var(--grey);">${attempt > 1 ? 'Venter etter overbelastning – prøver igjen...' : 'Dette kan ta et øyeblikk'}</small>
+        </div>`;
+
+      res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': APP.anthropicKey,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: payload
+      });
+
+      if (res.ok) break;
+
+      const body = await res.json().catch(() => ({}));
+      const errMsg = body.error && body.error.message ? body.error.message : res.statusText;
+      if ((res.status === 529 || res.status === 503) && attempt < MAX_RETRIES) {
+        await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
+        continue;
+      }
+      throw new Error('Anthropic API-feil ' + res.status + ': ' + errMsg);
+    }
+
+    const data = await res.json();
+    const text = data.content && data.content[0] && data.content[0].text ? data.content[0].text : '';
+    el.innerHTML = `<div class="analysis-content">${formatAnalysis(text)}</div>`;
+
+  } catch (e) {
+    el.innerHTML = `
+      <div class="error-msg">Feil ved AI-analyse: ${escHtml(e.message)}</div>
+      <p style="margin-top:12px;font-size:.88rem;color:var(--grey);">Kontroller at Anthropic API-nøkkelen er korrekt og at du har tilgang til modellen claude-sonnet-4-20250514.</p>`;
+  }
+}
+
+function formatAnalysis(text) {
+  // Convert markdown-ish text to HTML
+  return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^#{1,3}\s+(.+)$/gm, '<h3>$1</h3>')
+    .replace(/^\d+\)\s+(.+)$/gm, '<p><strong>$1</strong></p>')
+    .replace(/^[-•]\s+(.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/g, m => '<ul>' + m + '</ul>')
+    .replace(/\n{2,}/g, '</p><p>')
+    .replace(/^(?!<[hpul])(.+)$/gm, '<p>$1</p>')
+    .replace(/<p><\/p>/g, '');
+}
+
+// ===================== TABS =====================
+function showTab(name) {
+  const tabs = ['stats', 'rawData', 'regions', 'niva', 'analysis', 'export'];
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', tabs[i] === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+// ===================== UTILS =====================
+function escHtml(s) {
+  return String(s || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function stripHtml(html) {
+  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+// Kjente grå-farger i Miro (brukes til navn/rolle-lapper)
+const MIRO_GRAY_COLORS = new Set(['gray','grey','dark_gray','dark_grey','#f4f6f7']);
+const ROLE_LABELS_RE   = /^\s*(navn|gruppenavn|leder|sekretær|sekretaer|tidtaker)\s*:?\s*$/i;
+
+function isMiroGray(fillColor) {
+  return MIRO_GRAY_COLORS.has((fillColor || '').toLowerCase().trim());
+}
+function isRoleLabel(content) {
+  return ROLE_LABELS_RE.test(stripHtml(content || '').trim());
+}
+function isActivitySticky(s) {
+  if (isMiroGray(s.style && s.style.fillColor)) return false;
+  if (isRoleLabel(s.data && s.data.content))    return false;
+  return true;
+}
+
+// ===================== CONFIG AUTO-LOAD =====================
+async function loadConfig() {
+  const statusEl = document.getElementById('configStatus');
+  try {
+    const res = await fetch('/config.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error('Fant ikke config.json');
+    const cfg = await res.json();
+    if (cfg.miroToken && cfg.anthropicKey &&
+        !cfg.miroToken.startsWith('DIN_') && !cfg.anthropicKey.startsWith('sk-ant-DIN_')) {
+      // Gyldig config – logg inn automatisk
+      APP.miroToken    = cfg.miroToken.trim();
+      APP.anthropicKey = cfg.anthropicKey.trim();
+      document.getElementById('loginPage').style.display = 'none';
+      document.getElementById('mainApp').style.display   = 'block';
+    } else {
+      // Fil funnet, men inneholder plassholderverdier
+      statusEl.textContent = '⚠️ config.json er ikke fylt ut med ekte nøkler – fyll inn manuelt.';
+      statusEl.style.color = '#e67e22';
+    }
+  } catch {
+    // Ingen config.json – vis vanlig innloggingsskjema (stille feil)
+    statusEl.textContent = 'Tip: Legg nøklene i config.json for å slippe manuell innlogging.';
+    statusEl.style.color = '#aaa';
+  }
+}
+
+// Enter on login inputs + auto-load config
+document.addEventListener('DOMContentLoaded', () => {
+  ['miroToken','anthropicKey'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+  });
+  loadConfig();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+# API-nøkler og lokal konfig – aldri commit disse!
+config.json
+*.env
+.env*
