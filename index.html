@@ -429,6 +429,7 @@
 let APP = {
   miroToken: '',
   anthropicKey: '',
+  useProxy: false,   // settes til true på Netlify
   boards: [],
   selectedBoards: [],
   evaluations: {},
@@ -464,9 +465,13 @@ function doLogout() {
 
 // ===================== MIRO API HELPER =====================
 async function miroGet(url) {
-  const res = await fetch(url, {
-    headers: { 'Authorization': 'Bearer ' + APP.miroToken, 'Accept': 'application/json' }
-  });
+  const fetchUrl = APP.useProxy
+    ? `/.netlify/functions/miro?url=${encodeURIComponent(url)}`
+    : url;
+  const headers = APP.useProxy
+    ? { 'Accept': 'application/json' }
+    : { 'Authorization': 'Bearer ' + APP.miroToken, 'Accept': 'application/json' };
+  const res = await fetch(fetchUrl, { headers });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error('Miro API-feil ' + res.status + ': ' + (body.message || res.statusText));
@@ -1379,14 +1384,16 @@ async function runAnalysis() {
           <small style="color:var(--grey);">${attempt > 1 ? 'Venter etter overbelastning – prøver igjen...' : 'Dette kan ta et øyeblikk'}</small>
         </div>`;
 
-      res = await fetch('https://api.anthropic.com/v1/messages', {
+      const anthropicUrl = APP.useProxy
+        ? '/.netlify/functions/anthropic'
+        : 'https://api.anthropic.com/v1/messages';
+      const anthropicHeaders = APP.useProxy
+        ? { 'content-type': 'application/json' }
+        : { 'x-api-key': APP.anthropicKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' };
+
+      res = await fetch(anthropicUrl, {
         method: 'POST',
-        headers: {
-          'x-api-key': APP.anthropicKey,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
+        headers: anthropicHeaders,
         body: payload
       });
 
@@ -1466,24 +1473,34 @@ function isActivitySticky(s) {
 // ===================== CONFIG AUTO-LOAD =====================
 async function loadConfig() {
   const statusEl = document.getElementById('configStatus');
+
+  // Sjekk om Netlify-proxy er tilgjengelig
+  try {
+    const probe = await fetch('/.netlify/functions/miro?url=ping', { method: 'GET' });
+    if (probe.status !== 404) {
+      APP.useProxy = true;
+      document.getElementById('loginPage').style.display = 'none';
+      document.getElementById('mainApp').style.display   = 'block';
+      return;
+    }
+  } catch { /* ikke på Netlify */ }
+
+  // Lokalt: prøv config.json
   try {
     const res = await fetch('/config.json', { cache: 'no-store' });
     if (!res.ok) throw new Error('Fant ikke config.json');
     const cfg = await res.json();
     if (cfg.miroToken && cfg.anthropicKey &&
         !cfg.miroToken.startsWith('DIN_') && !cfg.anthropicKey.startsWith('sk-ant-DIN_')) {
-      // Gyldig config – logg inn automatisk
       APP.miroToken    = cfg.miroToken.trim();
       APP.anthropicKey = cfg.anthropicKey.trim();
       document.getElementById('loginPage').style.display = 'none';
       document.getElementById('mainApp').style.display   = 'block';
     } else {
-      // Fil funnet, men inneholder plassholderverdier
       statusEl.textContent = '⚠️ config.json er ikke fylt ut med ekte nøkler – fyll inn manuelt.';
       statusEl.style.color = '#e67e22';
     }
   } catch {
-    // Ingen config.json – vis vanlig innloggingsskjema (stille feil)
     statusEl.textContent = 'Tip: Legg nøklene i config.json for å slippe manuell innlogging.';
     statusEl.style.color = '#aaa';
   }
