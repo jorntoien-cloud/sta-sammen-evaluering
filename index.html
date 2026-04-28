@@ -23,6 +23,16 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--grey-light); color: #1a1a1a; min-height: 100vh; }
 
+  /* ---- ACCESS CODE ---- */
+  #accessPage {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-mid) 100%);
+  }
+  #accessPage .login-card { max-width: 380px; }
+  #accessPage .login-card h1 { color: var(--green-dark); font-size: 1.6rem; margin-bottom: 6px; }
+  #accessPage .login-card p { color: var(--grey); margin-bottom: 24px; font-size: 0.95rem; }
+  .access-error { color: var(--red); font-size: 0.88rem; margin-bottom: 12px; min-height: 1.2em; }
+
   /* ---- LOGIN ---- */
   #loginPage {
     display: flex; align-items: center; justify-content: center;
@@ -244,6 +254,19 @@
 <body>
 
 <!-- LOGIN -->
+<div id="accessPage" style="display:none;">
+  <div class="login-card">
+    <h1>Stå sammen</h1>
+    <p>Skriv inn tilgangskoden for å fortsette.</p>
+    <div class="form-group">
+      <label>Tilgangskode</label>
+      <input type="password" id="accessCodeInput" placeholder="Tilgangskode..." autocomplete="off">
+    </div>
+    <div id="accessError" class="access-error"></div>
+    <button class="btn-primary" id="accessBtn" onclick="checkAccessCode()">Fortsett</button>
+  </div>
+</div>
+
 <div id="loginPage">
   <div class="login-card">
     <h1>Stå sammen</h1>
@@ -1470,6 +1493,42 @@ function isActivitySticky(s) {
   return true;
 }
 
+// ===================== TILGANGSKODE =====================
+async function checkAccessCode() {
+  const input = document.getElementById('accessCodeInput');
+  const errorEl = document.getElementById('accessError');
+  const btn = document.getElementById('accessBtn');
+  const code = input.value.trim();
+  if (!code) { errorEl.textContent = 'Skriv inn tilgangskoden.'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Sjekker...';
+  errorEl.textContent = '';
+
+  try {
+    const res = await fetch('/.netlify/functions/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      sessionStorage.setItem('accessGranted', '1');
+      document.getElementById('accessPage').style.display = 'none';
+      loadConfig();
+    } else {
+      errorEl.textContent = 'Feil tilgangskode. Prøv igjen.';
+      input.value = '';
+      input.focus();
+    }
+  } catch {
+    errorEl.textContent = 'Kunne ikke verifisere koden. Prøv igjen.';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Fortsett';
+  }
+}
+
 // ===================== CONFIG AUTO-LOAD =====================
 async function loadConfig() {
   const statusEl = document.getElementById('configStatus');
@@ -1513,7 +1572,29 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.key === 'Enter') doLogin();
     });
   });
-  loadConfig();
+  document.getElementById('accessCodeInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') checkAccessCode();
+  });
+
+  // Vis tilgangskode-skjerm eller gå rett til appen
+  if (sessionStorage.getItem('accessGranted') === '1') {
+    loadConfig();
+  } else {
+    // Sjekk om vi er på Netlify (auth-funksjon finnes) – vis kode-skjerm
+    fetch('/.netlify/functions/auth', { method: 'OPTIONS' })
+      .then(r => {
+        if (r.status < 500) {
+          document.getElementById('accessPage').style.display = 'flex';
+        } else {
+          // Ingen auth-funksjon tilgjengelig, gå rett til config
+          loadConfig();
+        }
+      })
+      .catch(() => {
+        // Ikke på Netlify (lokal utvikling) – hopp over tilgangskode
+        loadConfig();
+      });
+  }
 });
 </script>
 </body>
